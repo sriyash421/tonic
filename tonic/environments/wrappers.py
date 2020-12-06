@@ -52,3 +52,29 @@ class TimeFeature(gym.Wrapper):
         v = self.low + (self.high - self.low) * prop
         observation = np.append(observation, v)
         return observation, reward, done, info
+
+class Recurrent(gym.Wrapper):
+    
+    def __init__(self, env, max_steps):
+        self.max_history = max_steps
+        super().__init__(env)
+        dtype = self.observation_space.dtype
+        self._shape = (self.max_history,)+self.observation_space.shape
+        self.observation_space = gym.spaces.Box(low=self.observation_space.low, high=self.observation_space.high)
+        self.steps = 0
+        self.low = self.observation_space.low
+        self.high = self.observation_space.high
+
+    def reset(self, **kwargs):
+        self.steps = 0
+        observation = self.env.reset(**kwargs)
+        self.current_observation = np.zeros(self._shape)
+        self.current_observation[-1,:] = observation
+        return self.current_observation
+
+    def step(self, action):
+        assert self.steps < self.max_episode_steps
+        observation, reward, done, info = self.env.step(action)
+        self.steps += 1
+        self.current_observation = np.append(self.current_observation[1:,:], observation[None,:], axis=0)
+        return self.current_observation, reward, done, info

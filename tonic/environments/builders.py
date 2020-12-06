@@ -39,7 +39,7 @@ def control_suite_environment(*args, **kwargs):
 
 def build_environment(
     builder, name, terminal_timeouts=False, time_feature=False,
-    max_episode_steps='default', scaled_actions=True, *args, **kwargs
+    max_episode_steps='default', scaled_actions=True, recurrent=False, max_steps=None, *args, **kwargs
 ):
     '''Builds and wrap an environment.
     Time limits can be properly handled with terminal_timeouts=False or
@@ -67,6 +67,9 @@ def build_environment(
     # Scale actions from [-1, 1]^n to the true action space if needed.
     if scaled_actions:
         environment = environments.wrappers.ActionRescaler(environment)
+    
+    if recurrent and max_steps:
+        environment = environments.wrappers.Recurrent(environment, max_steps)
 
     environment.name = name
     environment.max_episode_steps = max_episode_steps
